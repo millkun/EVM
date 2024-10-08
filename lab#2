@@ -1,0 +1,66 @@
+#include <iostream>
+#include <windows.h>
+
+using namespace std;
+
+struct text_info {
+    unsigned char winright, winbottom; // столбец, строка правого нижнего угла
+    unsigned char attribute, normattr; // атрибуты окна
+    unsigned char currmode; // текущий режим работы видеоадаптера
+    unsigned char screenheight; // полная высота экрана
+    unsigned char screenwidth; // полная ширина экрана
+    unsigned char curx, cury;  // строка, столбец текущей позиции курсора
+};
+
+void window(int left, int top, int right, int bottom) {
+    static text_info current_window;
+
+    current_window.winright = right;
+    current_window.winbottom = bottom;
+    current_window.curx = left;
+    current_window.cury = top;
+
+    // Для проверки верности координат
+    cout << "Window is (" << left << ", " << top << ") (" << right << ", " << bottom << ")\n";
+}
+
+void setCursorPosition(int x, int y) { // Устанавливает позицию курсора в консоли
+    COORD coord;
+    coord.X = x;
+    coord.Y = y;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+
+void setTextColor(int color) { // Устанавливает цвет текста и фона в консоли
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+}
+
+int main() {
+    int x1 = 25, y1 = 10, x2 = 55, y2 = 20; // Координаты окошка
+    int T = 200; // 0.2 секунды в миллисекундах
+    int S = 3; // Шаг вниз
+    int tmp = y1;
+
+    window(x1, y1, x2, y2); // Объявление окошка
+
+    // Циклирую все возможные комбинации цветов и фонов через битовые операции
+    for (int bgColor = 0; bgColor < 16; ++bgColor) {
+        for (int textColor = 0; textColor < 16; ++textColor) {
+            int color = (bgColor << 4) | textColor; // Первые 4 бита - цвет фона. Вторые 4 бита - цвет текста
+            setTextColor(color); // Color содержит цвет и фона, и текста
+
+            setCursorPosition(x1, y1); // Установка курсора в начало
+            cout << "Background: " << bgColor << " Text: " << textColor;
+
+            // Перемещение курсора вниз на S строк
+            y1 += S;
+            if (y1 > y2) {
+                y1 = tmp; // Сброс координаты y1 в начало окна
+            }
+
+            Sleep(T); // Пауза на T миллисекунд
+        }
+    }
+
+    return 0;
+}
