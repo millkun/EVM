@@ -1,5 +1,7 @@
 #include <iostream>
 #include <windows.h>
+#include <vector>
+#include <sstream>
 
 using namespace std;
 
@@ -10,6 +12,11 @@ struct text_info {
     unsigned char screenheight; // полная высота экрана
     unsigned char screenwidth; // полная ширина экрана
     unsigned char curx, cury;  // строка, столбец текущей позиции курсора
+};
+
+struct line_info {
+    string text;
+    int color;
 };
 
 void window(int left, int top, int right, int bottom) {
@@ -43,24 +50,37 @@ int main() {
 
     window(x1, y1, x2, y2); // Объявление окошка
 
+    vector<line_info> lines; // Вектор для хранения строк и их цветов
+
     // Циклирую все возможные комбинации цветов и фонов через битовые операции
     for (int bgColor = 0; bgColor < 16; ++bgColor) {
         for (int textColor = 0; textColor < 16; ++textColor) {
             int color = (bgColor << 4) | textColor; // Первые 4 бита - цвет фона. Вторые 4 бита - цвет текста
-            setTextColor(color); // Color содержит цвет и фона, и текста
 
-            setCursorPosition(x1, y1); // Установка курсора в начало
-            cout << "Background: " << bgColor << " Text: " << textColor;
+            ostringstream oss;
+            if (textColor <= 9 ) oss << "Background: " << bgColor << " Text:  " << textColor;
+            else oss << "Background: " << bgColor << " Text: " << textColor;
+            
+            line_info li;
+            li.text = oss.str();
+            li.color = color; // Хранение информации о цвете для текущей строки
+            lines.push_back(li); // Добавление строки в вектор
 
-            // Перемещение курсора вниз на S строк
-            y1 += S;
-            if (y1 > y2) {
-                y1 = tmp; // Сброс координаты y1 в начало окна
+            // Выводим строки
+            for (int i = 0; i < lines.size(); ++i) {
+                setTextColor(lines[i].color); // Установка цвета для этой конкретной строки
+                setCursorPosition(x1, y1 + i * S);
+                cout << lines[i].text;
+            }
+
+            // Если количество строк превысило размеры окна, удаляем самую старую
+            if (lines.size() > (y2 - y1) / S) {
+                lines.erase(lines.begin());
             }
 
             Sleep(T); // Пауза на T миллисекунд
         }
     }
-
+    
     return 0;
 }
