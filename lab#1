@@ -1,0 +1,135 @@
+#include <iostream>
+#include <string>
+#include <iomanip>
+using namespace std;
+
+// Функция для вывода двоичного представления char
+string charBinary(char a) {
+    string str1;
+    char mask = 1;
+    for (int i = 7; i >= 0; i--) {
+        if ((a & (mask << i)) != 0)
+            str1.push_back('1');
+        else
+            str1.push_back('0');
+    }
+    return str1;
+}
+
+// Функция для вывода двоичного представления long long int
+string longLongBinary(long long a) {
+    string str1;
+    long long mask = 1;
+    for (int i = 63; i >= 0; i--) {
+        if ((a & (mask << i)) != 0)
+            str1.push_back('1');
+        else
+            str1.push_back('0');
+    }
+    return str1;
+}
+
+// Рабочая неоптимизированная версия
+long long longDoubleMirror(long long a, int start, int count) {
+    int move = count / 2; // Количество действий. Центральный бит при необходимости останется на месте
+    long long mask = 1;
+    int begin = start;
+    int end = start - count + 1;
+    for (int i = 0; i < move; i++) {
+        bool tmp1 = (a & (mask << (begin - i))) != 0; // Если на старте 1
+        bool tmp2 = (a & (mask << (end + i))) != 0; // Если на конце 1
+
+        if (tmp2 == 0 && tmp1 == 0) {
+            a &= ~(mask << (begin - i)); // Сбрасываю бит в начале
+            a &= ~(mask << (end + i)); // Сбрасываю бит в конце
+        }
+        else if (tmp2 == 0 && tmp1 == 1) {
+            a &= ~(mask << (begin - i)); // Сбрасываю бит в начале
+            a |= (mask << (end + i)); // Устанавливаю бит в конце
+        }
+        else if (tmp2 == 1 && tmp1 == 0) {
+            a |= (mask << (begin - i)); // Устанавливаю бит в начале
+            a &= ~(mask << (end + i)); // Сбрасываю бит в конце
+        }
+        else { // 1 1
+            a |= (mask << (begin - i)); // Устанавливаю бит в начале
+            a |= (mask << (end + i)); // Устанавливаю бит в конце
+        }
+    }
+    return a;
+}
+
+
+char charMirror(char a, int start, int count) {
+    int mask = 1;
+    int move = count / 2; // Количество действий. Центральный бит при необходимости останется на месте
+    for (int i = 0; i < move; i++) {
+        int begin = start - i;
+        int end = start - count + 1 + i;
+
+        // Получаем значения битов на позициях begin и end
+        bool bitBegin = (a >> begin) & mask;
+        bool bitEnd = (a >> end) & mask;
+
+        // Если биты разные, меняем их местами
+        if (bitBegin != bitEnd) {
+            a ^= (mask << begin) | (mask << end);
+        }
+    }
+    return a;
+}
+
+// Не очень хорошо работающая оптимизированная версия
+//long long longDoubleMirror(long long a, int start, int count) {
+//    int mask = 1;
+//    int move = count / 2;
+//    for (int i = 0; i < move; i++) {
+//        int begin = start - i;
+//        int end = start - count + 1 + i;
+//
+//        bool bitBegin = a & (mask << begin);
+//        bool bitEnd = a & (mask << end);
+//
+//        if (bitBegin != bitEnd) {
+//            a ^= (mask << begin);
+//            a ^= (mask << end);
+//        }
+//    }
+//    return a;
+//}
+
+int main() {
+    // Ввод данных
+    char c;
+    long double ld;
+    cout << "Enter a char: ";
+    cin >> c;
+    cout << "Enter a long double: ";
+    cin >> ld;
+    long long intld = *reinterpret_cast<long long*>(&ld);
+
+    // Вывод
+    string a = charBinary(c); // Обычные бинар
+    string b = longLongBinary(intld); 
+    cout << "Binary representation of char: " << a << endl;
+    cout << "Binary representation of long double: " << b << endl;
+
+    // Ввод данных
+    int startChar, countChar; // Для чара
+    int startLongDouble, countLongDouble; // Для дабла
+    cout << "Enter the start bit and count for char data type: " << endl;
+    cin >> startChar >> countChar;
+    cout << "Enter the start bit and count for long double data type: " << endl;
+    cin >> startLongDouble >> countLongDouble; cout << endl;
+
+    char resultChar = charMirror(c, startChar, countChar);
+    long long resultLongDouble = longDoubleMirror(intld, startLongDouble, countLongDouble);
+    string d = charBinary(resultChar); // Свапнутые бинары
+    string e = longLongBinary(resultLongDouble);
+    cout << "New char: " << static_cast<int>(resultChar) << endl; // Цифра, потому что некоторые символы не выводятся
+    cout << "Binary representation of new char: " << d << endl;
+    cout << "New long double: " << static_cast<long double>(resultLongDouble) << endl;
+    cout << "Binary representation of new long double: " << e << endl;
+
+    return 0;
+}
